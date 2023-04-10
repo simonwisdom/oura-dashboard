@@ -1,0 +1,75 @@
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: 0 1rem;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-bottom: 1rem;
+}
+
+.controls > * {
+    margin: 0.5rem;
+}
+
+.charts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    flex: 1;
+}
+
+.chart-container {
+    flex: 1;
+    min-width: 300px;
+    width: 45%;
+    height: calc(50vh - 2rem);
+    padding: 0 0.5rem;
+}
+
+.chart-container > canvas {
+    height: 100% !important;
+    width: 100% !important;
+}
+
+
+/* 
+.charts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+} */
+
+.canvas-container {
+    width: 48%;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 800px) {
+    .canvas-container {
+        width: 100%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .canvas-container {
+        max-height: 70vh;
+    }
+}
+
+@media (min-width: 1400px) {
+    .canvas-container {
+        max-height: 80vh;
+    }
+}

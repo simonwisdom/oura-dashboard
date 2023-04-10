@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <h1>Oura Double Dashboard Login</h1>
+        <form action="{{ url_for('routes.login') }}" method="post">
+            <span>You will need to generate a <a href="https://cloud.ouraring.com/personal-access-tokens">personal_access_token</a> for each Oura account and enter them below.</span>
+            <span style="font-size:10pt" >Your tokens and data are only stored as local cookies.</span>
+            <br>
+            <label for="user1_name">User 1's Name:</label>
+            <input type="text" name="user1_name" required>        
+            <br>
+            <label for="api_key1"> User 1's Personal Access Token:</label>
+            <input type="text" id="api_key1" name="api_key1" required>
+            <br>
+            <label for="user2_name">User 2's Name:</label>
+            <input type="text" name="user2_name" required>
+            <br>
+            <label for="api_key2">User 2's Personal Access Token:</label>
+            <input type="text" id="api_key2" name="api_key2" required>
+            <br>
+            <button type="submit">Login</button>
+        </form>
+
+        {% for message in get_flashed_messages() %}
+            <div class="error-message">{{ message }}</div>
+        {% endfor %}
+    </div>
+{% endblock %}

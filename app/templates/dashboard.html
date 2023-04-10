@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center mt-4 mb-5">Oura Double Dashboard</h1>
+        </div>
+    </div>
+
+    <div class="controls">
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date">
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date">
+        <button id="update_data">Update Data</button>
+    </div>
+
+    <div class="charts">
+        <div class="chart-container">
+            <canvas id="chart-sleep"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart-readiness"></canvas>
+        </div>
+    </div>
+
+    
+</div>
+
+    <script>
+        // Chart.js data and options
+        const chartData = {
+            sleep: {
+                labels: [],
+                data1: [],
+                data2: []
+            },
+            readiness: {
+                labels: [],
+                data1: [],
+                data2: []
+            }
+        };
+
+        const chartOptions = {
+            type: 'line',
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            displayFormats: {
+                                day: 'MMM dd'
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        // Create Chart.js instances
+        const sleepCtx = document.getElementById('chart-sleep').getContext('2d');
+        const readinessCtx = document.getElementById('chart-readiness').getContext('2d');
+
+        function createChart(ctx, title, color1, color2, dataKey1, dataKey2, user1_name, user2_name) {
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: `${user1_name}'s ${title}`,
+                            data: [],
+                            borderColor: color1,
+                            backgroundColor: `${color1}44`,
+                            fill: false,
+                            pointRadius: 3,
+                            dataKey: dataKey1
+                        },
+                        {
+                            label: `${user2_name}'s ${title}`,
+                            data: [],
+                            borderColor: color2,
+                            backgroundColor: `${color2}44`,
+                            fill: false,
+                            pointRadius: 3,
+                            dataKey: dataKey2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            display: true,
+                            color: (context) => {
+                                return context.dataset.borderColor;
+                            },
+                            formatter: (value) => {
+                                return value.toFixed(1);
+                            },
+                            align: 'top',
+                            anchor: 'end',
+                            offset: 4,
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date',
+                                font: {
+                                    size: 14,
+                                }
+                            },
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'MMM dd'
+                                }
+                        }
+                        },
+                        y: {
+                            grid: {
+                                drawBorder: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Score',
+                                font: {
+                                    size: 14,
+                                }
+                            }
+                        },
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                    elements: {
+                        point: {
+                            hoverRadius: 5,
+                            radius: 3,
+                        },
+                    },
+                }
+            });
+        }
+
+
+        const user1_name = "{{ user1_name }}";
+        const user2_name = "{{ user2_name }}";
+        let sleepChart = createChart(sleepCtx, "Sleep Score", "rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)", "sleep", "sleep", user1_name, user2_name);
+        let readinessChart = createChart(readinessCtx, "Readiness Score", "rgba(54, 162, 235, 1)", "rgba(255, 159, 64, 1)", "readiness", "readiness", user1_name, user2_name);
+
+
+        function updateCharts(data) {
+            [sleepChart, readinessChart].forEach((chart) => {
+                const dataKey1 = chart.data.datasets[0].dataKey;
+                const dataKey2 = chart.data.datasets[1].dataKey;
+
+                chart.data.labels = data.data1[dataKey1].map(d => d.day);
+                chart.data.datasets[0].data = data.data1[dataKey1].map(d => d.score);
+                chart.data.datasets[1].data = data.data2[dataKey2].map(d => d.score);
+                chart.update();
+            });
+        }
+
+        document.getElementById('update_data').addEventListener('click', function() {
+            const start_date = document.getElementById('start_date').value;
+            const end_date = document.getElementById('end_date').value;
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '{{ url_for("routes.update_data") }}');
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    console.log('Data received from server:', data);
+                    updateCharts(data);
+                } else {
+                    console.error('Failed to fetch data:', xhr.status, xhr.statusText);
+                }
+            };
+
+            // Encode the form data for the AJAX request
+            const params = new URLSearchParams();
+            params.append('start_date', start_date);
+            params.append('end_date', end_date);
+            
+            xhr.send(params.toString());
+        });
+
+   // Initialize the charts with the initial data
+   const initialData = {
+            data1: {{ data1 | tojson | safe }},
+            data2: {{ data2 | tojson | safe }}
+        };
+        console.log('Initial data:', initialData);
+        updateCharts(initialData);
+    </script>
+{% endblock %}
